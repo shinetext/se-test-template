@@ -3,22 +3,17 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-const request = require('request');
-
-// Sets static folder to /public
-app.use(express.static('public'));
-
-// Uses Pug as the view enginer
-app.set('view engine', 'pug');
 
 // Parse application/json
 app.use(bodyParser.json());
 
-/**
- * GET /
- */
-app.get('/', (req, res) => {
-  res.render('index', {});
+app.use(function(req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept'
+  );
+  next();
 });
 
 /**
@@ -33,6 +28,6 @@ app.post('/message', (req, res) => {
 /**
  * Start listening for connections
  */
-app.listen(3000, () => {
-  console.log('Listening on port 3000...');
+app.listen(8081, () => {
+  console.log('Listening on port 8081...');
 });
