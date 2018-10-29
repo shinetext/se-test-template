@@ -25,9 +25,45 @@ app.post('/message', (req, res) => {
   //
 });
 
+// health check
+app.get('/health', function(req, res) {
+  const health = undefined;
+  const type = req.query.type;
+  type.toLowerCase();
+  type.trim();
+  if (type == 'uptime') {
+    return res.json({ uptime: process.uptime() });
+  }
+
+  if (type == 'status') {
+    return res.json({ status: 'UP' });
+  }
+
+  if (type == 'all') {
+    return res.json({
+      db: await dbcheck(),
+      services: await checkServices(),
+    })
+  }
+});
+
 /**
  * Start listening for connections
  */
 app.listen(8081, () => {
   console.log('Listening on port 8081...');
 });
+
+async function dbcheck() {
+  //
+  // Assume this does some sort of check against the database being used
+  // and returns an object indicating its health.
+  //
+}
+
+async function checkServices() {
+  //
+  // Assume this does some sort of check against external services being
+  // used and returns an object indicating the health of each.
+  //
+}
