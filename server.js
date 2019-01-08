@@ -3,6 +3,8 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
+const mysql = require('mysql');
+const util = require('util');
 
 // Parse application/json
 app.use(bodyParser.json());
@@ -25,8 +27,43 @@ app.post('/message', (req, res) => {
   //
 });
 
+async function db_check() {
+  var connection = mysql.createConnection({
+    host: process.env.HOST || 'localhost',
+    user: process.env.USER || 'root',
+    password: process.env.PASSWORD || 'password',
+    database: process.env.DATABASE,
+  });
+  connection.connect();
+
+  const query = util.promisify(connection.query).bind(connection);
+  try {
+    let reuslts = await query(`show status`);
+
+    console.log(reuslts);
+
+    let status = {};
+    for (const r of reuslts) {
+      if (r.Variable_name === 'Connections') {
+        status = Object.assign(status, { connections: r.Value });
+      }
+    }
+    return status;
+  } catch (error) {
+    console.log('error');
+    throw error;
+  }
+}
+
+async function checkServices() {
+  //
+  // TODO: Check health of external services
+  //
+  return 'ok';
+}
+
 // health check
-app.get('/health', function(req, res) {
+app.get('/health', async function(req, res) {
   const health = undefined;
   const type = req.query.type;
   type.toLowerCase();
@@ -40,10 +77,12 @@ app.get('/health', function(req, res) {
   }
 
   if (type == 'all') {
+    const dbStatus = await db_check();
+    const services_status = await checkServices();
     return res.json({
-      db: await dbcheck(),
-      services: await checkServices(),
-    })
+      db: dbStatus,
+      services: services_status,
+    });
   }
 });
 
@@ -53,17 +92,3 @@ app.get('/health', function(req, res) {
 app.listen(8081, () => {
   console.log('Listening on port 8081...');
 });
-
-async function dbcheck() {
-  //
-  // Assume this does some sort of check against the database being used
-  // and returns an object indicating its health.
-  //
-}
-
-async function checkServices() {
-  //
-  // Assume this does some sort of check against external services being
-  // used and returns an object indicating the health of each.
-  //
-}
